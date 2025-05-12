@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: case_study
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d case_study"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  scraper:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/src
+    environment:
+      DB_URL: postgresql://user:password@postgres:5432/case_study
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
